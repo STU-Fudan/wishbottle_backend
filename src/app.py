@@ -4,11 +4,14 @@ import uuid
 import tornado.ioloop
 import tornado.web
 import tornado.gen
+from tornado.options import define, options
 
 import cjson
 import motor
 
 db = motor.MotorClient().client.wish_bottle
+
+define("port", default=8888, help="run on the given port", type=int)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -104,5 +107,6 @@ application = tornado.web.Application([
 ])
 
 if __name__ == "__main__":
-    application.listen(8888)
-    tornado.ioloop.IOLoop.current().start()
+    tornado.options.parse_command_line()
+    application.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()
