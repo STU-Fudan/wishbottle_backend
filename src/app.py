@@ -1,4 +1,5 @@
 from functools import wraps
+import sys
 import uuid
 
 import tornado.ioloop
@@ -12,6 +13,8 @@ import motor
 db = motor.MotorClient().client.wish_bottle
 
 define("port", default=8888, help="run on the given port", type=int)
+reload(sys)
+sys.setdefaultencoding("utf8")
 
 
 class BaseHandler(tornado.web.RequestHandler):
