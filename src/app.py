@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from functools import wraps
 import uuid
+import time
 
 import tornado.ioloop
 import tornado.web
@@ -27,21 +28,16 @@ class GetHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
-        offset = self.get_argument("offset")
-        offset = int(offset)
+        timestamp = self.get_argument("timestamp")
+        timestamp = int(timestamp)
         response = []
-        cursor = db.text.find({"_id": {"$gte": offset}}).limit(20)
-        times = 0
+        cursor = db.text.find({"timestamp": {"$lt": timestamp}}, {"_id": 0}).limit(1000)
         while (yield cursor.fetch_next):
-            if times > 0:
-                self.write(",")
-            times = times + 1
             obj = cursor.next_object()
             # obj["content"] = obj["content"].decode('unicode-escape')
             # obj["name"] = obj["name"].decode('unicode-escape')
             response.append(obj)
         self.write({"reponse": response})
-        print(response)
         self.finish()
 
 
@@ -87,17 +83,10 @@ class PostHandler(BaseHandler):
         data = json.loads(self.request.body.decode("utf8"))
         name = data["name"]
         content = data["content"]
-        # get _id
-        cursor = db.text.find().sort([("_id", -1)]).limit(1)
-        yield cursor.fetch_next
-        message = cursor.next_object()
-        if message is None:
-            _id = 0
-        else:
-            _id = message["_id"] + 1
+        timestamp = int(time.time()*1000)
         # insert
         result = yield db.text.insert({
-            "_id": _id,
+            "timestamp": timestamp,
             "name": name,
             "content": content
         })
