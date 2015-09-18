@@ -28,14 +28,14 @@ class GetHandler(BaseHandler):
         offset = self.get_argument("offset")
         offset = int(offset)
         cursor = db.text.find({"_id": {"$gte": offset}}).limit(20)
-        self.write("{")
+        self.write("[")
         times = 0
         while (yield cursor.fetch_next):
             if times > 0:
                 self.write(",")
             times = times + 1
             self.write(cjson.encode(cursor.next_object()))
-        self.write("}")
+        self.write("]")
         self.finish()
 
 
