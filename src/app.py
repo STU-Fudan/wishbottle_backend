@@ -10,7 +10,7 @@ from tornado.options import define, options
 import cjson
 import motor
 
-db = motor.MotorClient().client.wish_bottle
+db = motor.MotorClient().wish_bottle.wish_bottle
 
 define("port", default=8888, help="run on the given port", type=int)
 reload(sys)
