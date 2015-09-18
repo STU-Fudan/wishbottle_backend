@@ -1,5 +1,5 @@
+# -*- coding:utf-8 -*-
 from functools import wraps
-import sys
 import uuid
 
 import tornado.ioloop
@@ -7,14 +7,13 @@ import tornado.web
 import tornado.gen
 from tornado.options import define, options
 
-import cjson
+import json
 import motor
 
 db = motor.MotorClient().wish_bottle.wish_bottle
 
 define("port", default=8888, help="run on the given port", type=int)
-reload(sys)
-sys.setdefaultencoding("utf8")
+# sys.setdefaultencoding("utf8")
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -30,15 +29,19 @@ class GetHandler(BaseHandler):
     def get(self):
         offset = self.get_argument("offset")
         offset = int(offset)
+        response = []
         cursor = db.text.find({"_id": {"$gte": offset}}).limit(20)
-        self.write("[")
         times = 0
         while (yield cursor.fetch_next):
             if times > 0:
                 self.write(",")
             times = times + 1
-            self.write(cjson.encode(cursor.next_object()))
-        self.write("]")
+            obj = cursor.next_object()
+            # obj["content"] = obj["content"].decode('unicode-escape')
+            # obj["name"] = obj["name"].decode('unicode-escape')
+            response.append(obj)
+        self.write({"reponse": response})
+        print(response)
         self.finish()
 
 
@@ -48,7 +51,7 @@ class StarHandler(BaseHandler):
     def post(self):
         id = self.get_argument("id")
         cursor = db.zan.find({"user": self.current_user, "text_id": id})
-        print self.current_user
+        print(self.current_user)
         yield cursor.fetch_next
         record = cursor.next_object()
         if record is None:
@@ -81,7 +84,7 @@ class PostHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        data = cjson.decode(self.request.body)
+        data = json.loads(self.request.body.decode("utf8"))
         name = data["name"]
         content = data["content"]
         # get _id
