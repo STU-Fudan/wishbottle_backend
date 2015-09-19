@@ -10,6 +10,7 @@ from tornado.options import define, options
 
 import json
 import motor
+import bson
 
 db = motor.MotorClient().wish_bottle.wish_bottle
 
@@ -28,33 +29,54 @@ class GetHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self):
-        timestamp = self.get_argument("timestamp")
-        timestamp = int(timestamp)
-        response = []
-        cursor = db.text.find({"timestamp": {"$lt": timestamp}}, {"_id": 0}).limit(1000)
-        while (yield cursor.fetch_next):
-            obj = cursor.next_object()
-            # obj["content"] = obj["content"].decode('unicode-escape')
-            # obj["name"] = obj["name"].decode('unicode-escape')
-            response.append(obj)
-        self.write({"reponse": response})
-        self.finish()
+        _type = self.get_argument("type")
+        if _type == "time":
+            timestamp = self.get_argument("timestamp")
+            timestamp = int(timestamp)
+            response = []
+            cursor = db.text.find(
+                {"timestamp": {"$lt": timestamp}}
+            ).limit(1000)
+            while (yield cursor.fetch_next):
+                obj = cursor.next_object()
+                obj["_id"] = str(obj["_id"])
+                # obj["content"] = obj["content"].decode('unicode-escape')
+                # obj["name"] = obj["name"].decode('unicode-escape')
+                response.append(obj)
+            self.write({"response": response})
+            self.finish()
+        elif _type == "star":
+            response = []
+            cursor = db.text.find().sort([("star_count", -1), ("timestamp", -1)])
+            while (yield cursor.fetch_next):
+                obj = cursor.next_object()
+                obj["_id"] = str(obj["_id"])
+                response.append(obj)
+            self.write({"response": response})
+            self.finish()
+        else:
+            self.write("no such method")
+            self.finish()
 
 
 class StarHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        id = self.get_argument("id")
-        cursor = db.zan.find({"user": self.current_user, "text_id": id})
         print(self.current_user)
+        _id = self.get_argument("_id")
+        cursor = db.zan.find({"user": self.current_user, "text_id": _id})
         yield cursor.fetch_next
         record = cursor.next_object()
         if record is None:
-            cursor = yield db.zan.insert({
+            yield db.zan.insert({
                 "user": self.current_user,
-                "text_id": id
+                "text_id": _id
             })
+            yield db.text.update(
+                {"_id": bson.objectid.ObjectId(_id)},
+                {"$inc": {"star_count": 1}}
+            )
             self.write("successfully")
         else:
             self.set_status(405)
@@ -64,14 +86,18 @@ class UnstarHandler(BaseHandler):
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
-        id = self.get_argument("id")
-        cursor = db.zan.find({"user": self.current_user, "text_id": id})
+        _id = self.get_argument("_id")
+        cursor = db.zan.find({"user": self.current_user, "text_id": _id})
         yield cursor.fetch_next
         record = cursor.next_object()
         if record is None:
             self.set_status(405)
         else:
-            yield db.zan.remove({"user": self.current_user, "text_id": id})
+            yield db.zan.remove({"user": self.current_user, "text_id": _id})
+            yield db.text.update(
+                {"_id": bson.objectid.ObjectId(_id)}, 
+                {"$inc": {"star_count": -1}}
+            )
             self.write("successfully")
         self.finish()
 
@@ -88,7 +114,8 @@ class PostHandler(BaseHandler):
         result = yield db.text.insert({
             "timestamp": timestamp,
             "name": name,
-            "content": content
+            "content": content,
+            "star_count": 0
         })
 
         self.finish()
