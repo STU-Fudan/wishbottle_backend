@@ -47,7 +47,7 @@ class GetHandler(BaseHandler):
             self.finish()
         elif _type == "star":
             response = []
-            cursor = db.text.find().sort([("star_count", -1), ("timestamp", -1)])
+            cursor = db.text.find().sort([("star_count", -1), ("timestamp", -1)]).limit(1000)
             while (yield cursor.fetch_next):
                 obj = cursor.next_object()
                 obj["_id"] = str(obj["_id"])
