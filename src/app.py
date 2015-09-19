@@ -54,6 +54,14 @@ class GetHandler(BaseHandler):
                 response.append(obj)
             self.write({"response": response})
             self.finish()
+        elif _type == "_id":
+            _id = self.get_argument("_id")
+            cursor = db.text.find({"_id": bson.objectid.ObjectId(_id)})
+            yield cursor.fetch_next
+            obj = cursor.next_object()
+            obj["_id"] = str(obj["_id"])
+            self.write({"response": [obj]})
+            self.finish()
         else:
             self.write("no such method")
             self.finish()
