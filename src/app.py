@@ -62,6 +62,10 @@ class GetHandler(BaseHandler):
             obj["_id"] = str(obj["_id"])
             self.write({"response": [obj]})
             self.finish()
+        elif _type == "count":
+            count = yield db.text.count()
+            self.write({"response": count})
+            self.finish()
         else:
             self.write("no such method")
             self.finish()
