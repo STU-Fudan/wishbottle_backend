@@ -130,6 +130,7 @@ class PostHandler(BaseHandler):
             "star_count": 0
         })
 
+        self.write({"_id": result})
         self.finish()
 
 
