@@ -59,7 +59,7 @@ def get_signature():
         signature[index] = i
     
     signature = "".join(signature)
-    print(signature)
+    signature = signature.encode("utf-8")
 
     signature = hashlib.sha1(signature).hexdigest()
 
