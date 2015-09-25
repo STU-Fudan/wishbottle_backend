@@ -43,6 +43,8 @@ def get_signature():
         ticket_collection.drop()
         ticket_collection.insert({"content": ticket, "timestamp": timestamp})
 
+    timestamp = str(timestamp)
+
     signature = "jsapi_ticket="+ticket+"&noncestr="+nonceStr+"&timestamp="+timestamp+"&url="+url
     
     signature = signature.encode("utf-8")
