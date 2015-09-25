@@ -31,12 +31,11 @@ class GetHandler(BaseHandler):
     def get(self):
         _type = self.get_argument("type")
         if _type == "time":
-            timestamp = self.get_argument("timestamp")
-            timestamp = int(timestamp)
+            timestamp = int(time.time() * 1000)
             response = []
             cursor = db.text.find(
                 {"timestamp": {"$lt": timestamp}}
-            ).sort({"timestamp": -1}).limit(1000)
+            ).sort([("timestamp": -1)]).limit(1000)
             while (yield cursor.fetch_next):
                 obj = cursor.next_object()
                 obj["_id"] = str(obj["_id"])
