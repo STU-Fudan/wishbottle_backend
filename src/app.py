@@ -36,7 +36,7 @@ class GetHandler(BaseHandler):
             response = []
             cursor = db.text.find(
                 {"timestamp": {"$lt": timestamp}}
-            ).limit(1000)
+            ).sort(["timestamp", -1]).limit(1000)
             while (yield cursor.fetch_next):
                 obj = cursor.next_object()
                 obj["_id"] = str(obj["_id"])
