@@ -51,7 +51,7 @@ class GetHandler(BaseHandler):
                 obj = cursor.next_object()
                 obj["_id"] = str(obj["_id"])
                 response.append(obj)
-            self.write({"response": response})
+            self.write({"response", response})
             self.finish()
         elif _type == "_id":
             _id = self.get_argument("_id")
