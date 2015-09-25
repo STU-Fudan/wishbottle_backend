@@ -43,22 +43,8 @@ def get_signature():
         ticket_collection.drop()
         ticket_collection.insert({"content": ticket, "timestamp": timestamp})
 
-    signature = sorted([url, str(timestamp), ticket, nonceStr])
-    for index in range(len(signature)):
-        i = signature[index]
-        if i == url:
-            i = "url=" + url 
-        if i == str(timestamp):
-            i = "timestamp=" + str(timestamp)
-        if i == ticket:
-            i = "jsapi_ticket=" + ticket
-        if i == nonceStr:
-            i = "noncestr=" + nonceStr
-        if index > 0:
-            i = "&" + i
-        signature[index] = i
+    signature = "jsapi_ticket="+ticket+"&noncestr="+nonceStr+"&timestamp="+timestamp+"&url="+url
     
-    signature = "".join(signature)
     signature = signature.encode("utf-8")
 
     signature = hashlib.sha1(signature).hexdigest()
